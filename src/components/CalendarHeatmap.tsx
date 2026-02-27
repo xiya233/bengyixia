@@ -150,14 +150,15 @@ export function CalendarHeatmap({ data, startDate, endDate, onDateClick }: Calen
                                     className="cursor-pointer transition-all duration-150 hover:brightness-110 hover:ring-1"
                                     stroke={tooltip?.date === day.dateStr ? (theme === "dark" ? "#58a6ff" : "#0969da") : "transparent"}
                                     strokeWidth={tooltip?.date === day.dateStr ? 1.5 : 0}
-                                    onMouseEnter={(e) => {
-                                        const rect = e.currentTarget.getBoundingClientRect();
+                                    onMouseEnter={() => {
+                                        const cellX = labelW + wi * (cellSize + cellGap) + cellSize / 2;
+                                        const cellY = headerH + di * (cellSize + cellGap);
                                         setTooltip({
                                             date: day.dateStr,
                                             count,
                                             duration: record?.durationMinutes || null,
-                                            x: rect.left + rect.width / 2,
-                                            y: rect.top,
+                                            x: cellX,
+                                            y: cellY,
                                         });
                                     }}
                                     onMouseLeave={() => setTooltip(null)}
@@ -185,7 +186,7 @@ export function CalendarHeatmap({ data, startDate, endDate, onDateClick }: Calen
             {/* Tooltip */}
             {tooltip && (
                 <div
-                    className="fixed z-50 pointer-events-none"
+                    className="absolute z-50 pointer-events-none"
                     style={{
                         left: tooltip.x,
                         top: tooltip.y - 8,
