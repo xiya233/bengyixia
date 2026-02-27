@@ -17,7 +17,7 @@ export async function addRecord(formData: FormData) {
         return { error: "请填写有效的日期和跳绳次数" };
     }
 
-    // Upsert: if record exists for this date, update it
+    // 累计：如果当天已有记录，将次数和时长累加
     const existing = db
         .select()
         .from(jumpRecords)
@@ -25,8 +25,10 @@ export async function addRecord(formData: FormData) {
         .get();
 
     if (existing) {
+        const newCount = existing.count + count;
+        const newDuration = (existing.durationMinutes || 0) + (durationMinutes || 0);
         db.update(jumpRecords)
-            .set({ count, durationMinutes })
+            .set({ count: newCount, durationMinutes: newDuration || null })
             .where(eq(jumpRecords.id, existing.id))
             .run();
     } else {
