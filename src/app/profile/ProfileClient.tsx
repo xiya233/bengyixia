@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, useRef } from "react";
-import { updateProfile, uploadAvatar } from "@/app/actions/user";
+import { updateProfile, uploadAvatar, changePassword } from "@/app/actions/user";
 import { toggleShare } from "@/app/actions/share";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import Link from "next/link";
@@ -35,6 +35,8 @@ export function ProfileClient({ user }: ProfileClientProps) {
     const [isPending, startTransition] = useTransition();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
+    const [pwMsg, setPwMsg] = useState("");
+    const [pwError, setPwError] = useState("");
 
     const shareUrl = shareToken ? `${typeof window !== 'undefined' ? window.location.origin : ''}/share/${shareToken}` : '';
 
@@ -247,6 +249,109 @@ export function ProfileClient({ user }: ProfileClientProps) {
                     </div>
                 </div>
 
+                {/* Password Change Section */}
+                <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl 
+                        border border-gray-200/60 dark:border-gray-800/60 p-8 mt-6
+                        shadow-sm animate-slide-up">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
+                        🔑 修改密码
+                    </h3>
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            setPwMsg("");
+                            setPwError("");
+                            const formData = new FormData(e.currentTarget);
+                            startTransition(async () => {
+                                const result = await changePassword(formData);
+                                if (result?.error) {
+                                    setPwError(result.error);
+                                } else {
+                                    setPwMsg("密码修改成功");
+                                    (e.target as HTMLFormElement).reset();
+                                }
+                            });
+                        }}
+                        className="space-y-4 max-w-md"
+                    >
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                旧密码
+                            </label>
+                            <input
+                                name="oldPassword"
+                                type="password"
+                                required
+                                autoComplete="current-password"
+                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 
+                                           bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+                                           focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500
+                                           placeholder:text-gray-400 dark:placeholder:text-gray-500
+                                           transition-all duration-200"
+                                placeholder="请输入当前密码"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                新密码
+                            </label>
+                            <input
+                                name="newPassword"
+                                type="password"
+                                required
+                                autoComplete="new-password"
+                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 
+                                           bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+                                           focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500
+                                           placeholder:text-gray-400 dark:placeholder:text-gray-500
+                                           transition-all duration-200"
+                                placeholder="至少 6 个字符"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                确认新密码
+                            </label>
+                            <input
+                                name="confirmPassword"
+                                type="password"
+                                required
+                                autoComplete="new-password"
+                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 
+                                           bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+                                           focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500
+                                           placeholder:text-gray-400 dark:placeholder:text-gray-500
+                                           transition-all duration-200"
+                                placeholder="再次输入新密码"
+                            />
+                        </div>
+
+                        {pwError && (
+                            <div className="text-sm text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">
+                                {pwError}
+                            </div>
+                        )}
+                        {pwMsg && (
+                            <div className="text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 rounded-lg">
+                                ✅ {pwMsg}
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={isPending}
+                            className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-cyan-500 
+                                       hover:from-emerald-600 hover:to-cyan-600
+                                       text-white font-medium rounded-xl text-sm
+                                       disabled:opacity-50 disabled:cursor-not-allowed
+                                       transition-all duration-200 shadow-md shadow-emerald-500/25
+                                       active:scale-[0.98]"
+                        >
+                            {isPending ? "处理中..." : "修改密码"}
+                        </button>
+                    </form>
+                </div>
+
                 {/* Share Section */}
                 <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl 
                         border border-gray-200/60 dark:border-gray-800/60 p-8 mt-6
@@ -322,8 +427,8 @@ export function ProfileClient({ user }: ProfileClientProps) {
                                     key={item.key}
                                     onClick={() => toggleWidgetType(item.key)}
                                     className={`flex-1 min-w-[120px] px-4 py-3 rounded-xl border-2 transition-all duration-200 text-left ${widgetTypes[item.key]
-                                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                                         }`}
                                 >
                                     <div className="text-sm font-medium text-gray-900 dark:text-white">

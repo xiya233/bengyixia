@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { users, siteSettings } from "@/db/schema";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, hashPassword, verifyPassword } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import path from "path";
 import fs from "fs";
@@ -71,4 +71,43 @@ export async function uploadAvatar(formData: FormData) {
         .run();
 
     return { success: true, avatar: avatarUrl };
+}
+
+export async function changePassword(formData: FormData) {
+    const user = await getCurrentUser();
+    if (!user) return { error: "请先登录" };
+
+    const oldPassword = formData.get("oldPassword") as string;
+    const newPassword = formData.get("newPassword") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
+
+    if (!oldPassword || !newPassword || !confirmPassword) {
+        return { error: "所有密码字段不能为空" };
+    }
+
+    if (newPassword.length < 6) {
+        return { error: "新密码长度至少 6 个字符" };
+    }
+
+    if (newPassword !== confirmPassword) {
+        return { error: "两次输入的新密码不一致" };
+    }
+
+    // Verify old password
+    const dbUser = db.select().from(users).where(eq(users.id, user.id)).get();
+    if (!dbUser) return { error: "用户不存在" };
+
+    const valid = await verifyPassword(oldPassword, dbUser.passwordHash);
+    if (!valid) {
+        return { error: "旧密码错误" };
+    }
+
+    // Update password
+    const newHash = await hashPassword(newPassword);
+    db.update(users)
+        .set({ passwordHash: newHash })
+        .where(eq(users.id, user.id))
+        .run();
+
+    return { success: true };
 }
