@@ -28,6 +28,7 @@ interface DashboardClientProps {
     }>;
     defaultStartDate: string;
     defaultEndDate: string;
+    siteTitle: string;
 }
 
 export function DashboardClient({
@@ -35,6 +36,7 @@ export function DashboardClient({
     initialRecords,
     defaultStartDate,
     defaultEndDate,
+    siteTitle,
 }: DashboardClientProps) {
     const [records, setRecords] = useState(initialRecords);
     const [startDate, setStartDate] = useState(defaultStartDate);
@@ -86,7 +88,7 @@ export function DashboardClient({
                         <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center shadow-sm">
                             <span className="text-sm">🏃</span>
                         </div>
-                        <h1 className="text-lg font-bold text-gray-900 dark:text-white">蹦叽下</h1>
+                        <h1 className="text-lg font-bold text-gray-900 dark:text-white">{siteTitle}</h1>
                     </div>
                     <div className="flex items-center gap-3">
                         <ThemeToggle />

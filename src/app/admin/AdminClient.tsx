@@ -318,8 +318,8 @@ export function AdminClient({ currentUser, users, initialSettings, initialAnnoun
                                     onClick={() => handleUpdateSetting("captcha_enabled", settings.captcha_enabled === "true" ? "false" : "true")}
                                     disabled={isPending}
                                     className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 ${settings.captcha_enabled !== "false"
-                                            ? "bg-emerald-500"
-                                            : "bg-gray-300 dark:bg-gray-600"
+                                        ? "bg-emerald-500"
+                                        : "bg-gray-300 dark:bg-gray-600"
                                         }`}
                                 >
                                     <span
@@ -390,7 +390,11 @@ export function AdminClient({ currentUser, users, initialSettings, initialAnnoun
                                     max="20"
                                     value={settings.max_avatar_size_mb || "5"}
                                     onChange={(e) => setSettings((prev) => ({ ...prev, max_avatar_size_mb: e.target.value }))}
-                                    onBlur={(e) => handleUpdateSetting("max_avatar_size_mb", e.target.value)}
+                                    onBlur={(e) => {
+                                        let val = Math.max(1, Math.min(20, parseInt(e.target.value) || 5));
+                                        setSettings((prev) => ({ ...prev, max_avatar_size_mb: String(val) }));
+                                        handleUpdateSetting("max_avatar_size_mb", String(val));
+                                    }}
                                     className="w-24 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 
                                bg-white dark:bg-gray-800 text-gray-900 dark:text-white
                                focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500

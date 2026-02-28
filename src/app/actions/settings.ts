@@ -32,6 +32,7 @@ export async function updateSiteSetting(key: string, value: string) {
         .onConflictDoUpdate({ target: siteSettings.key, set: { value } })
         .run();
     revalidatePath("/");
+    revalidatePath("/dashboard");
     return { success: true };
 }
 
