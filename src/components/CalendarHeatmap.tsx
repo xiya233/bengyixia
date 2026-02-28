@@ -54,7 +54,7 @@ export function CalendarHeatmap({ data, startDate, endDate, onDateClick }: Calen
 
     const { weeks, monthLabels } = useMemo(() => {
         const weeks: { date: Date; dateStr: string }[][] = [];
-        const monthLabels: { label: string; col: number }[] = [];
+        const monthRanges: { label: string; col: number }[] = [];
 
         const current = new Date(startDate);
         // Align to Monday
@@ -63,7 +63,8 @@ export function CalendarHeatmap({ data, startDate, endDate, onDateClick }: Calen
         current.setDate(current.getDate() - diff);
 
         let weekIndex = 0;
-        let lastMonth = -1;
+        let lastYearMonth = "";
+        let lastYear = -1;
 
         while (current <= endDate || weeks.length === 0) {
             const week: { date: Date; dateStr: string }[] = [];
@@ -71,9 +72,20 @@ export function CalendarHeatmap({ data, startDate, endDate, onDateClick }: Calen
                 const d = new Date(current);
                 week.push({ date: d, dateStr: formatDate(d) });
 
-                if (d.getMonth() !== lastMonth && d >= startDate && d <= endDate) {
-                    lastMonth = d.getMonth();
-                    monthLabels.push({ label: MONTHS_ZH[lastMonth], col: weekIndex });
+                if (d >= startDate && d <= endDate) {
+                    const year = d.getFullYear();
+                    const month = d.getMonth();
+                    const ym = `${year}-${month}`;
+                    if (ym !== lastYearMonth) {
+                        lastYearMonth = ym;
+                        // Show year label when year changes
+                        if (year !== lastYear) {
+                            lastYear = year;
+                            // For Jan or first month of a new year, show "YYYY年"
+                            monthRanges.push({ label: `${year}`, col: weekIndex });
+                        }
+                        monthRanges.push({ label: MONTHS_ZH[month], col: weekIndex });
+                    }
                 }
 
                 current.setDate(current.getDate() + 1);
@@ -83,6 +95,12 @@ export function CalendarHeatmap({ data, startDate, endDate, onDateClick }: Calen
 
             if (current > endDate && week[6].date > endDate) break;
         }
+
+        // Filter labels that are too close (< 3 cols apart)
+        const monthLabels = monthRanges.filter((m, i) => {
+            if (i === 0) return true;
+            return m.col - monthRanges[i - 1].col >= 3;
+        });
 
         return { weeks, monthLabels };
     }, [startDate, endDate]);
@@ -117,7 +135,7 @@ export function CalendarHeatmap({ data, startDate, endDate, onDateClick }: Calen
                         <text
                             key={label}
                             x={0}
-                            y={headerH + (i * 2 + 1) * (cellSize + cellGap) + cellSize - 2}
+                            y={headerH + (i * 2) * (cellSize + cellGap) + cellSize - 2}
                             className="fill-gray-400 dark:fill-gray-500"
                             fontSize={9}
                             fontFamily="system-ui, sans-serif"

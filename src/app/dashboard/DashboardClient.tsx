@@ -4,6 +4,7 @@ import { useState, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarHeatmap } from "@/components/CalendarHeatmap";
 import { RecordForm } from "@/components/RecordForm";
+import { JumpCharts } from "@/components/JumpCharts";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { addRecord } from "@/app/actions/records";
 import { getRecords } from "@/app/actions/records";
@@ -200,6 +201,11 @@ export function DashboardClient({
                         endDate={new Date(endDate)}
                         onDateClick={handleDateClick}
                     />
+                </div>
+
+                {/* Charts */}
+                <div className="mb-8">
+                    <JumpCharts records={records} />
                 </div>
 
                 {/* Record Form */}
