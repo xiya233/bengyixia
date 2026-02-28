@@ -3,10 +3,21 @@
 import { db } from "@/db";
 import { users, siteSettings } from "@/db/schema";
 import { hashPassword, verifyPassword, createSession, destroySession } from "@/lib/auth";
+import { verifyCaptcha } from "@/lib/captcha";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 export async function register(formData: FormData) {
+    // Verify captcha if enabled
+    const captchaSetting = db.select().from(siteSettings).where(eq(siteSettings.key, "captcha_enabled")).get();
+    if (captchaSetting?.value !== "false") {
+        const captchaId = formData.get("captchaId") as string;
+        const captchaAnswer = formData.get("captchaAnswer") as string;
+        if (!captchaId || !captchaAnswer || !verifyCaptcha(captchaId, captchaAnswer)) {
+            return { error: "验证码错误" };
+        }
+    }
+
     // Check if registration is enabled (first user always allowed)
     const userCount = db.select().from(users).all().length;
     if (userCount > 0) {
@@ -50,6 +61,16 @@ export async function register(formData: FormData) {
 }
 
 export async function login(formData: FormData) {
+    // Verify captcha if enabled
+    const captchaSetting = db.select().from(siteSettings).where(eq(siteSettings.key, "captcha_enabled")).get();
+    if (captchaSetting?.value !== "false") {
+        const captchaId = formData.get("captchaId") as string;
+        const captchaAnswer = formData.get("captchaAnswer") as string;
+        if (!captchaId || !captchaAnswer || !verifyCaptcha(captchaId, captchaAnswer)) {
+            return { error: "验证码错误" };
+        }
+    }
+
     const username = formData.get("username") as string;
     const password = formData.get("password") as string;
 

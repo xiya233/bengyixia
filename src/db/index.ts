@@ -76,4 +76,5 @@ sqlite.exec(`
   INSERT OR IGNORE INTO site_settings (key, value) VALUES ('site_title', '蹦叽下');
   INSERT OR IGNORE INTO site_settings (key, value) VALUES ('site_description', '每日跳绳记录');
   INSERT OR IGNORE INTO site_settings (key, value) VALUES ('max_avatar_size_mb', '5');
+  INSERT OR IGNORE INTO site_settings (key, value) VALUES ('captcha_enabled', 'true');
 `);

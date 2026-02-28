@@ -147,8 +147,8 @@ export function AdminClient({ currentUser, users, initialSettings, initialAnnoun
                             key={tab.key}
                             onClick={() => setActiveTab(tab.key)}
                             className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${activeTab === tab.key
-                                    ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
-                                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                                ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                                 }`}
                         >
                             {tab.icon} {tab.label}
@@ -288,8 +288,8 @@ export function AdminClient({ currentUser, users, initialSettings, initialAnnoun
                                     onClick={() => handleUpdateSetting("registration_enabled", settings.registration_enabled === "true" ? "false" : "true")}
                                     disabled={isPending}
                                     className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 ${settings.registration_enabled === "true"
-                                            ? "bg-emerald-500"
-                                            : "bg-gray-300 dark:bg-gray-600"
+                                        ? "bg-emerald-500"
+                                        : "bg-gray-300 dark:bg-gray-600"
                                         }`}
                                 >
                                     <span
@@ -303,6 +303,35 @@ export function AdminClient({ currentUser, users, initialSettings, initialAnnoun
                             </div>
                         </div>
 
+                        {/* Captcha Toggle */}
+                        <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl 
+                                border border-gray-200/60 dark:border-gray-800/60 p-6
+                                shadow-sm animate-fade-in">
+                            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
+                                🔢 验证码
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                登录和注册时是否要求用户输入数学验证码。
+                            </p>
+                            <div className="flex items-center gap-4">
+                                <button
+                                    onClick={() => handleUpdateSetting("captcha_enabled", settings.captcha_enabled === "true" ? "false" : "true")}
+                                    disabled={isPending}
+                                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 ${settings.captcha_enabled !== "false"
+                                            ? "bg-emerald-500"
+                                            : "bg-gray-300 dark:bg-gray-600"
+                                        }`}
+                                >
+                                    <span
+                                        className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${settings.captcha_enabled !== "false" ? "translate-x-6" : "translate-x-1"
+                                            }`}
+                                    />
+                                </button>
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    {settings.captcha_enabled !== "false" ? "已启用验证码" : "已关闭验证码"}
+                                </span>
+                            </div>
+                        </div>
                         {/* Site Title & Description */}
                         <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl 
                                 border border-gray-200/60 dark:border-gray-800/60 p-6

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect, useCallback } from "react";
 import { register, login } from "./actions/auth";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -8,6 +8,7 @@ interface AuthPageProps {
     siteTitle: string;
     siteDescription: string;
     registrationEnabled: boolean;
+    captchaEnabled: boolean;
     announcements: Array<{
         id: number;
         title: string;
@@ -20,12 +21,31 @@ export function AuthPageClient({
     siteTitle,
     siteDescription,
     registrationEnabled,
+    captchaEnabled,
     announcements,
 }: AuthPageProps) {
     const [mode, setMode] = useState<"login" | "register">("login");
     const [error, setError] = useState("");
     const [successMsg, setSuccessMsg] = useState("");
     const [isPending, startTransition] = useTransition();
+    const [captchaId, setCaptchaId] = useState("");
+    const [captchaSvg, setCaptchaSvg] = useState("");
+    const [captchaAnswer, setCaptchaAnswer] = useState("");
+
+    const loadCaptcha = useCallback(async () => {
+        if (!captchaEnabled) return;
+        try {
+            const res = await fetch("/api/captcha");
+            const data = await res.json();
+            setCaptchaId(data.id);
+            setCaptchaSvg(data.svg);
+            setCaptchaAnswer("");
+        } catch { /* ignore */ }
+    }, [captchaEnabled]);
+
+    useEffect(() => {
+        loadCaptcha();
+    }, [loadCaptcha]);
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -48,10 +68,11 @@ export function AuthPageClient({
             const result = await action(formData);
             if (result?.error) {
                 setError(result.error);
+                loadCaptcha();
             } else if (result?.success && mode === "register") {
-                // Registration succeeded, switch to login
                 setMode("login");
                 setSuccessMsg("注册成功，请登录");
+                loadCaptcha();
             }
         });
     };
@@ -189,6 +210,48 @@ export function AuthPageClient({
                                                placeholder:text-gray-400 dark:placeholder:text-gray-500
                                                transition-all duration-200"
                                     placeholder="再次输入密码"
+                                />
+                            </div>
+                        )}
+
+                        {/* Captcha */}
+                        {captchaEnabled && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                    验证码
+                                </label>
+                                <div className="flex items-center gap-3">
+                                    <div
+                                        className="flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 cursor-pointer select-none"
+                                        onClick={loadCaptcha}
+                                        title="点击刷新验证码"
+                                        dangerouslySetInnerHTML={{ __html: captchaSvg }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={loadCaptcha}
+                                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                                        title="刷新验证码"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <input type="hidden" name="captchaId" value={captchaId} />
+                                <input
+                                    name="captchaAnswer"
+                                    type="text"
+                                    required
+                                    value={captchaAnswer}
+                                    onChange={(e) => setCaptchaAnswer(e.target.value)}
+                                    autoComplete="off"
+                                    className="w-full mt-2 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 
+                                               bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+                                               focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500
+                                               placeholder:text-gray-400 dark:placeholder:text-gray-500
+                                               transition-all duration-200"
+                                    placeholder="请输入计算结果"
                                 />
                             </div>
                         )}

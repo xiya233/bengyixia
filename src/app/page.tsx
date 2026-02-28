@@ -10,6 +10,7 @@ export default async function AuthPage() {
       siteTitle={settings.site_title || "蹦叽下"}
       siteDescription={settings.site_description || "每日跳绳记录"}
       registrationEnabled={settings.registration_enabled !== "false"}
+      captchaEnabled={settings.captcha_enabled !== "false"}
       announcements={announcements}
     />
   );
