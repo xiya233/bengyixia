@@ -58,4 +58,22 @@ sqlite.exec(`
   );
 
   CREATE UNIQUE INDEX IF NOT EXISTS idx_jump_records_user_date ON jump_records(user_id, date);
+
+  CREATE TABLE IF NOT EXISTS site_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS announcements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  -- Default settings
+  INSERT OR IGNORE INTO site_settings (key, value) VALUES ('registration_enabled', 'true');
+  INSERT OR IGNORE INTO site_settings (key, value) VALUES ('site_title', '蹦叽下');
+  INSERT OR IGNORE INTO site_settings (key, value) VALUES ('site_description', '每日跳绳记录');
+  INSERT OR IGNORE INTO site_settings (key, value) VALUES ('max_avatar_size_mb', '5');
 `);

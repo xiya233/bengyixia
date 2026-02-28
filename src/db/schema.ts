@@ -21,7 +21,21 @@ export const jumpRecords = sqliteTable("jump_records", {
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
+export const siteSettings = sqliteTable("site_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+});
+
+export const announcements = sqliteTable("announcements", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type JumpRecord = typeof jumpRecords.$inferSelect;
 export type NewJumpRecord = typeof jumpRecords.$inferInsert;
+export type SiteSetting = typeof siteSettings.$inferSelect;
+export type Announcement = typeof announcements.$inferSelect;

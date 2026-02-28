@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { getSiteSettings } from "@/app/actions/settings";
 
-export const metadata: Metadata = {
-  title: "蹦叽下 - 每日跳绳记录",
-  description: "记录每天的跳绳数据，追踪你的运动进度",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
+  const title = settings.site_title || "蹦叽下";
+  const description = settings.site_description || "每日跳绳记录";
+  return {
+    title: `${title} - ${description}`,
+    description,
+  };
+}
 
 export default function RootLayout({
   children,

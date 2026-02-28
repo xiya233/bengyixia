@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { users, siteSettings } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import path from "path";
@@ -29,8 +29,12 @@ export async function uploadAvatar(formData: FormData) {
     const file = formData.get("avatar") as File;
     if (!file || file.size === 0) return { error: "请选择头像文件" };
 
-    if (file.size > 5 * 1024 * 1024) {
-        return { error: "头像文件大小不能超过 5MB" };
+    // Get configurable max avatar size
+    const sizeSetting = db.select().from(siteSettings).where(eq(siteSettings.key, "max_avatar_size_mb")).get();
+    const maxSizeMB = parseInt(sizeSetting?.value || "5");
+
+    if (file.size > maxSizeMB * 1024 * 1024) {
+        return { error: `头像文件大小不能超过 ${maxSizeMB}MB` };
     }
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];

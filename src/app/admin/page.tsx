@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AdminClient } from "./AdminClient";
 import { db } from "@/db";
 import { users } from "@/db/schema";
+import { getSiteSettings, getAnnouncements } from "@/app/actions/settings";
 
 export default async function AdminPage() {
     const user = await getCurrentUser();
@@ -18,10 +19,15 @@ export default async function AdminPage() {
         createdAt: users.createdAt,
     }).from(users).all();
 
+    const settings = await getSiteSettings();
+    const announcements = await getAnnouncements();
+
     return (
         <AdminClient
             currentUser={{ id: user.id, username: user.username }}
             users={allUsers}
+            initialSettings={settings}
+            initialAnnouncements={announcements}
         />
     );
 }

@@ -1,12 +1,20 @@
 "use server";
 
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { users, siteSettings } from "@/db/schema";
 import { hashPassword, verifyPassword, createSession, destroySession } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 export async function register(formData: FormData) {
+    // Check if registration is enabled (first user always allowed)
+    const userCount = db.select().from(users).all().length;
+    if (userCount > 0) {
+        const regSetting = db.select().from(siteSettings).where(eq(siteSettings.key, "registration_enabled")).get();
+        if (regSetting?.value === "false") {
+            return { error: "管理员已关闭注册功能" };
+        }
+    }
     const username = formData.get("username") as string;
     const password = formData.get("password") as string;
 
@@ -30,17 +38,15 @@ export async function register(formData: FormData) {
     const passwordHash = await hashPassword(password);
 
     // First user is admin
-    const userCount = db.select().from(users).all().length;
     const role = userCount === 0 ? "admin" : "user";
 
-    const result = db.insert(users).values({
+    db.insert(users).values({
         username,
         passwordHash,
         role,
-    }).returning().get();
+    }).run();
 
-    await createSession(result.id, result.role);
-    redirect("/dashboard");
+    return { success: true };
 }
 
 export async function login(formData: FormData) {
