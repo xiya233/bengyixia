@@ -6,7 +6,7 @@ import fs from "fs";
 
 const dataDir = path.join(process.cwd(), "data");
 if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
+  fs.mkdirSync(dataDir, { recursive: true });
 }
 
 const sqlite = new Database(path.join(dataDir, "app.db"));
@@ -25,8 +25,28 @@ sqlite.exec(`
     bio TEXT,
     role TEXT NOT NULL DEFAULT 'user',
     status TEXT NOT NULL DEFAULT 'active',
+    share_token TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
+
+  -- Migration: add share_token column if not exists
+  CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY);
+  INSERT OR IGNORE INTO _migrations VALUES ('add_share_token');
+`);
+
+// Run column migrations
+try {
+  const migrationDone = sqlite.prepare("SELECT name FROM _migrations WHERE name = 'add_share_token'").get();
+  if (migrationDone) {
+    const columns = sqlite.prepare("PRAGMA table_info(users)").all() as Array<{ name: string }>;
+    const hasShareToken = columns.some(c => c.name === "share_token");
+    if (!hasShareToken) {
+      sqlite.exec("ALTER TABLE users ADD COLUMN share_token TEXT");
+    }
+  }
+} catch { /* column already exists */ }
+
+sqlite.exec(`
 
   CREATE TABLE IF NOT EXISTS jump_records (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

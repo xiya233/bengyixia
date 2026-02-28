@@ -14,6 +14,7 @@ export default async function ProfilePage() {
                 avatar: user.avatar,
                 bio: user.bio,
                 role: user.role,
+                shareToken: user.shareToken,
                 createdAt: user.createdAt,
             }}
         />

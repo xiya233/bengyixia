@@ -8,6 +8,7 @@ export const users = sqliteTable("users", {
   bio: text("bio"),
   role: text("role", { enum: ["admin", "user"] }).notNull().default("user"),
   status: text("status", { enum: ["active", "banned"] }).notNull().default("active"),
+  shareToken: text("share_token"),
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 

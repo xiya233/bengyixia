@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useRef } from "react";
 import { updateProfile, uploadAvatar } from "@/app/actions/user";
+import { toggleShare } from "@/app/actions/share";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,6 +14,7 @@ interface ProfileClientProps {
         avatar: string | null;
         bio: string | null;
         role: string;
+        shareToken: string | null;
         createdAt: string;
     };
 }
@@ -20,11 +22,68 @@ interface ProfileClientProps {
 export function ProfileClient({ user }: ProfileClientProps) {
     const [bio, setBio] = useState(user.bio || "");
     const [avatar, setAvatar] = useState(user.avatar);
+    const [shareToken, setShareToken] = useState(user.shareToken);
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
+    const [copied, setCopied] = useState(false);
+    const [widgetCopied, setWidgetCopied] = useState(false);
+    const [widgetTypes, setWidgetTypes] = useState<Record<string, boolean>>({
+        heatmap: true,
+        line: false,
+        bar: false,
+    });
     const [isPending, startTransition] = useTransition();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
+
+    const shareUrl = shareToken ? `${typeof window !== 'undefined' ? window.location.origin : ''}/share/${shareToken}` : '';
+
+    const handleToggleShare = () => {
+        startTransition(async () => {
+            const result = await toggleShare();
+            if (result.error) {
+                setError(result.error);
+            } else {
+                setShareToken(result.shareToken ?? null);
+                setMessage(result.shareToken ? "分享已开启" : "分享已关闭");
+                setTimeout(() => setMessage(""), 2000);
+            }
+        });
+    };
+
+    const handleCopyUrl = async () => {
+        if (!shareUrl) return;
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const toggleWidgetType = (type: string) => {
+        setWidgetTypes((prev) => ({ ...prev, [type]: !prev[type] }));
+    };
+
+    const getEmbedCode = () => {
+        if (!shareToken) return '';
+        const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+        const selected = Object.entries(widgetTypes).filter(([, v]) => v).map(([k]) => k);
+        if (selected.length === 0) return '<!-- 请至少选择一种图表类型 -->';
+
+        const iframes = selected.map((type) => {
+            const labels: Record<string, string> = { heatmap: '跳绳热力图', line: '跳绳趋势', bar: '每日时长' };
+            const heights: Record<string, number> = { heatmap: 220, line: 260, bar: 260 };
+            return `<!-- ${labels[type]} -->
+<iframe src="${baseUrl}/embed/${shareToken}?type=${type}" width="100%" height="${heights[type]}" style="border:none;border-radius:12px;overflow:hidden;" loading="lazy"></iframe>`;
+        });
+        return iframes.join('\n\n');
+    };
+
+    const handleCopyWidget = async () => {
+        const code = getEmbedCode();
+        if (!code) return;
+        await navigator.clipboard.writeText(code);
+        setWidgetCopied(true);
+        setTimeout(() => setWidgetCopied(false), 2000);
+    };
 
     const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -122,8 +181,8 @@ export function ProfileClient({ user }: ProfileClientProps) {
                         <h2 className="text-xl font-bold text-gray-900 dark:text-white mt-3">{user.username}</h2>
                         <span
                             className={`mt-1.5 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.role === "admin"
-                                    ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
-                                    : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                                ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+                                : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
                                 }`}
                         >
                             {user.role === "admin" ? "管理员" : "普通用户"}
@@ -187,6 +246,115 @@ export function ProfileClient({ user }: ProfileClientProps) {
                         </div>
                     </div>
                 </div>
+
+                {/* Share Section */}
+                <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl 
+                        border border-gray-200/60 dark:border-gray-800/60 p-8 mt-6
+                        shadow-sm animate-slide-up">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
+                        🔗 分享运动数据
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                        开启分享后，其他人可以通过专属链接查看你的运动数据。
+                    </p>
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={handleToggleShare}
+                            disabled={isPending}
+                            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 focus:outline-none ${shareToken
+                                ? 'bg-emerald-500'
+                                : 'bg-gray-300 dark:bg-gray-600'
+                                }`}
+                        >
+                            <span
+                                className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${shareToken ? 'translate-x-6' : 'translate-x-1'
+                                    }`}
+                            />
+                        </button>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {shareToken ? '分享已开启' : '分享已关闭'}
+                        </span>
+                    </div>
+
+                    {shareToken && (
+                        <div className="mt-4 flex items-center gap-2">
+                            <input
+                                type="text"
+                                readOnly
+                                value={shareUrl}
+                                className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 
+                                    bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs
+                                    select-all truncate"
+                            />
+                            <button
+                                onClick={handleCopyUrl}
+                                className="px-4 py-2 text-xs font-medium rounded-lg
+                                    bg-emerald-50 text-emerald-600 hover:bg-emerald-100
+                                    dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/40
+                                    transition-colors whitespace-nowrap"
+                            >
+                                {copied ? '✅ 已复制' : '📋 复制链接'}
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* Widget Embed Section */}
+                {shareToken && (
+                    <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm rounded-2xl 
+                            border border-gray-200/60 dark:border-gray-800/60 p-8 mt-6
+                            shadow-sm animate-slide-up">
+                        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
+                            🧩 小挂件
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+                            将跳绳记录嵌入到你的个人博客或网站中。
+                        </p>
+
+                        {/* Chart Type Selection */}
+                        <div className="flex flex-wrap gap-3 mb-5">
+                            {[
+                                { key: 'heatmap', label: '🔥 热力图', desc: '年度运动热力' },
+                                { key: 'line', label: '📈 折线图', desc: '跳绳次数趋势' },
+                                { key: 'bar', label: '📊 柱状图', desc: '每日运动时长' },
+                            ].map((item) => (
+                                <button
+                                    key={item.key}
+                                    onClick={() => toggleWidgetType(item.key)}
+                                    className={`flex-1 min-w-[120px] px-4 py-3 rounded-xl border-2 transition-all duration-200 text-left ${widgetTypes[item.key]
+                                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+                                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                        }`}
+                                >
+                                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                        {item.label}
+                                    </div>
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                        {item.desc}
+                                    </div>
+                                    {widgetTypes[item.key] && (
+                                        <div className="text-emerald-500 text-xs mt-1">✓ 已选择</div>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Embed Code Preview */}
+                        <div className="relative">
+                            <pre className="bg-gray-900 text-gray-300 rounded-xl p-4 text-xs overflow-x-auto leading-relaxed">
+                                <code>{getEmbedCode()}</code>
+                            </pre>
+                            <button
+                                onClick={handleCopyWidget}
+                                className="absolute top-3 right-3 px-3 py-1.5 text-xs font-medium rounded-lg
+                                    bg-white/10 text-white hover:bg-white/20
+                                    transition-colors whitespace-nowrap"
+                            >
+                                {widgetCopied ? '✅ 已复制' : '📋 复制代码'}
+                            </button>
+                        </div>
+                    </div>
+                )}
             </main>
         </div>
     );
