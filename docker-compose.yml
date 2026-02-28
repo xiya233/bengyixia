@@ -1,0 +1,14 @@
+services:
+  bengyixia:
+    build: .
+    container_name: bengyixia
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - JWT_SECRET=your-super-secure-random-key-here
+      - CAPTCHA_SECRET=your-captcha-secret-key-here
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/public/uploads
